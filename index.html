@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Fire Detection & Emergency Evacuation Simulation | ESP8266 Wi-Fi + A*</title>
+  <meta name="description" content="College MPMC Project: Smart Fire Detection and Dynamic Emergency Evacuation Simulation using ESP8266 Wi-Fi sensor telemetry and safety-weighted A* pathfinding.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Global Top Header -->
+  <header class="app-header">
+    <div class="header-branding">
+      <div class="header-logo">
+        <span class="logo-flame">🔥</span>
+        <span class="logo-shield">🛡️</span>
+      </div>
+      <div>
+        <h1 class="header-title">SMART FIRE DETECTION &amp; EVACUATION SYSTEM</h1>
+        <p class="header-subtitle">ESP8266 Wi-Fi Microcontroller Sensor Network + A* Intelligent Path Planning | MPMC Engineering Project</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <div class="hardware-badge">
+        <span class="indicator-dot pulse-amber"></span>
+        <span class="badge-text">HARDWARE: <strong>SIMULATION MODE</strong></span>
+      </div>
+      <button id="btnToggleAudio" class="btn btn-secondary" title="Toggle audio alarm buzzer">
+        🔊 Sound ON
+      </button>
+      <button id="btnRunDemo" class="btn btn-primary" title="Automated 13-second Viva Presentation">
+        ▶ RUN DEMO
+      </button>
+      <button id="btnStartEvac" class="btn btn-accent" title="Animate occupant along computed safe route">
+        ⚡ Evacuate
+      </button>
+      <button id="btnClearFires" class="btn btn-secondary" title="Extinguish all active fires">
+        🧹 Clear Fires
+      </button>
+      <a href="mobile.html" target="_blank" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none; background: linear-gradient(135deg, #0284c7, #38bdf8); color: #040812; font-weight: 700;" title="Open Mobile Phone View for Building Occupants">
+        📱 Phone App View
+      </a>
+      <button id="btnReset" class="btn btn-outline" title="Reset entire building simulation to initial state">
+        🔄 Reset
+      </button>
+    </div>
+  </header>
+
+  <!-- Emergency Alert Banner (Appears on Fire) -->
+  <div id="emergencyBanner" class="emergency-banner hidden">
+    <span class="emergency-icon">🚨</span>
+    <span id="emergencyBannerText" class="emergency-text">CRITICAL ALERT: FIRE DETECTED! INITIATING DYNAMIC EVACUATION</span>
+    <span class="emergency-icon">🚨</span>
+  </div>
+
+  <!-- Scripted Presentation Demo Progress Banner -->
+  <div id="demoBanner" class="demo-banner hidden"></div>
+
+  <!-- Main Content Layout Grid -->
+  <main class="dashboard-grid">
+
+    <!-- LEFT COLUMN: Floor Plan Canvas, Route Info, A* Explorer -->
+    <section class="map-viewport-section">
+      <div class="card map-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <h2 class="card-title">2D Architectural Building Floor Plan</h2>
+            <span class="card-subtitle">Grid Resolution: 42 × 26 cells | Interactive Occupant &amp; Sensor Layer</span>
+          </div>
+
+          <!-- Occupant Selector Controls -->
+          <div class="occupant-selector">
+            <span class="selector-label">Active Occupant:</span>
+            <button class="btn-occupant active" data-occupant-id="P1">👤 P1 (Comp Lab)</button>
+            <button class="btn-occupant" data-occupant-id="P2">👤 P2 (Classroom 1)</button>
+            <button class="btn-occupant" data-occupant-id="P3">👤 P3 (Elec Lab)</button>
+          </div>
+        </div>
+
+        <!-- Canvas Container -->
+        <div class="canvas-wrapper">
+          <canvas id="mapCanvas"></canvas>
+          <div class="canvas-hints">
+            <span>💡 <strong>Tip:</strong> Click any sensor to ignite/extinguish fire. Click any walkable floor cell to relocate the occupant.</span>
+          </div>
+        </div>
+
+        <!-- Map Legend -->
+        <div class="map-legend">
+          <div class="legend-item"><span class="legend-color safe"></span> Safe Floor</div>
+          <div class="legend-item"><span class="legend-color caution"></span> Caution (Smoke)</div>
+          <div class="legend-item"><span class="legend-color danger"></span> High Danger (Heat)</div>
+          <div class="legend-item"><span class="legend-color fire"></span> 🔥 Fire Epicenter (Blocked)</div>
+          <div class="legend-item"><span class="legend-color wall"></span> Structural Wall</div>
+          <div class="legend-item"><span class="legend-color sensor"></span> 📡 Sensor Node</div>
+          <div class="legend-item"><span class="legend-color exit"></span> 🚪 Emergency Exit</div>
+          <div class="legend-item"><span class="legend-color route"></span> 〰 Safest Path (A*)</div>
+        </div>
+
+        <!-- Dynamic Route Reasoning Callout -->
+        <div id="comparisonCallout" class="callout info">
+          <strong>System Status:</strong> Standing by. All 8 sensors reporting normal telemetry.
+        </div>
+
+        <!-- Viva A* Algorithm Step Explorer -->
+        <div class="astar-explorer-card">
+          <div class="explorer-header">
+            <div class="toggle-group">
+              <label class="switch">
+                <input type="checkbox" id="aStarVizToggle">
+                <span class="slider round"></span>
+              </label>
+              <span class="toggle-text"><strong>Visualize A* Search</strong> (Viva / Algorithm Demonstration Mode)</span>
+            </div>
+            <div id="aStarVizControls" class="viz-controls hidden">
+              <button id="btnTracePlay" class="btn-sm btn-secondary">⏸ Pause</button>
+              <button id="btnTraceStep" class="btn-sm btn-secondary">⏭ Step</button>
+              <div class="speed-slider-group">
+                <span>Slow</span>
+                <input type="range" id="traceSpeedSlider" min="20" max="230" value="190">
+                <span>Fast</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Viva Metrics Panel -->
+          <div class="viva-metrics-grid">
+            <div class="metric-box">
+              <span class="metric-label">Step / Iterations</span>
+              <span id="vizStepCount" class="metric-val mono">- / -</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Open Set (Queued)</span>
+              <span id="vizOpenCount" class="metric-val mono">-</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Closed Set (Visited)</span>
+              <span id="vizClosedCount" class="metric-val mono">-</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">Current Node (X, Y)</span>
+              <span id="vizCurrentNode" class="metric-val mono">-</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">g(n) Accumulated Cost</span>
+              <span id="vizGScore" class="metric-val mono">-</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">h(n) Manhattan Heuristic</span>
+              <span id="vizHScore" class="metric-val mono">-</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-label">f(n) = g + h Total</span>
+              <span id="vizFScore" class="metric-val mono highlight-val">-</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN: Operations Dashboard, Telemetry, Controls -->
+    <aside class="sidebar-section">
+
+      <!-- System Status Overview Card -->
+      <div class="card status-overview-card">
+        <div class="card-header">
+          <h2 class="card-title">Emergency Decision Support</h2>
+          <span id="systemStatusPill" class="status-badge normal">🟢 STANDBY NORMAL</span>
+        </div>
+
+        <div class="status-stats-grid">
+          <div class="stat-card">
+            <span class="stat-label">Active Fires</span>
+            <span id="activeFiresCount" class="stat-value mono">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Sensors Online</span>
+            <span class="stat-value mono">8 / 8</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Optimal Exit</span>
+            <span id="chosenExit" class="stat-value mono">EXIT A</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Path Distance</span>
+            <span id="pathDistance" class="stat-value mono">--</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Cumulative Hazard Risk</span>
+            <span id="pathRisk" class="stat-value mono">--</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Est. Evac Time</span>
+            <span id="pathTime" class="stat-value mono">--</span>
+          </div>
+        </div>
+
+        <!-- Exit Safety Evaluation Matrix -->
+        <div class="section-sub-header">
+          <h3 class="sub-title">Exit Candidate Evaluation Matrix (Safety-Weighted)</h3>
+        </div>
+        <div id="exitComparisonCards" class="exit-comparison-grid"></div>
+      </div>
+
+      <!-- Manual Fire Trigger Control Grid -->
+      <div class="card fire-trigger-card">
+        <div class="card-header">
+          <h2 class="card-title">Manual Fire Trigger Panel</h2>
+          <span class="card-badge">8 Building Zones</span>
+        </div>
+        <p class="section-desc">Click any sensor button below to trigger simulated fire &amp; toxic smoke spread:</p>
+        <div id="fireButtonsGrid" class="fire-buttons-grid"></div>
+      </div>
+
+      <!-- Live Sensor Telemetry Table -->
+      <div class="card telemetry-card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Sensor Telemetry Network</h2>
+            <span class="card-subtitle">MQ-2 Smoke (ppm) | DHT22 Temp (°C) | Flame Sensor (ESP8266 D1)</span>
+          </div>
+          <span class="badge simulation-badge">SIMULATED &amp; HARDWARE SENSORS</span>
+        </div>
+
+        <div class="table-container">
+          <table class="telemetry-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Location</th>
+                <th>Smoke</th>
+                <th>Temp</th>
+                <th>Flame</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="sensorTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ESP8266 Wi-Fi Hardware Integration -->
+      <div class="card hardware-card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">ESP8266 Wi-Fi Hardware Bridge (Live Sensor 6)</h2>
+            <span class="card-subtitle">Local HTTP Polling (/status) &bull; Mapped to Central Hallway (S6)</span>
+          </div>
+          <span id="wifiStatusBadge" class="badge">🔴 Disconnected</span>
+        </div>
+
+        <div class="hardware-info-block">
+          <p>
+            <strong>Physical Hardware Mapping:</strong> Your physical <strong>ESP8266</strong> (Pin D1: Flame Sensor, Pin D2: Buzzer) is linked directly to <strong>Sensor 6 (Central Hallway)</strong>.
+            The dashboard polls <code>/status</code> over your local Wi-Fi every 500ms. When the flame sensor detects fire, Sensor 6 turns red and the A* algorithm instantly redirects building occupants away from danger!
+          </p>
+
+          <!-- Wi-Fi URL & Polling Control Bar -->
+          <div class="wifi-control-bar">
+            <div class="url-input-container">
+              <span class="url-prefix">🌐 ESP IP:</span>
+              <input type="text" id="esp8266Url" placeholder="http://192.168.137.209/status" value="http://192.168.137.209/status" spellcheck="false">
+            </div>
+            <div class="wifi-action-buttons">
+              <button id="btnToggleWifiSync" class="btn btn-sm btn-primary" title="Start or Stop polling ESP8266 Wi-Fi">
+                📡 Connect &amp; Start Sync
+              </button>
+              <button id="btnSimulateFlame" class="btn btn-sm btn-secondary" style="border-color: #ef4444; color: #fca5a5;" title="Simulate flame detection without hardware">
+                🔥 Test Flame (Fire)
+              </button>
+              <button id="btnSimulateClear" class="btn btn-sm btn-secondary" style="border-color: #10b981; color: #6ee7b7;" title="Simulate normal clear conditions">
+                🧯 Test Clear (Safe)
+              </button>
+            </div>
+          </div>
+
+          <!-- Real-time Hardware Diagnostics Strip -->
+          <div class="hw-diagnostics-row">
+            <div class="hw-stat-item">
+              <span class="stat-label">Flame Sensor (D1):</span>
+              <span id="hwFlameState" class="stat-value safe">CLEAR</span>
+            </div>
+            <div class="hw-stat-item">
+              <span class="stat-label">Target Sensor:</span>
+              <span class="stat-value">S6 (Central Hallway)</span>
+            </div>
+            <div class="hw-stat-item">
+              <span class="stat-label">Poll Frequency:</span>
+              <span class="stat-value">500 ms</span>
+            </div>
+            <div class="hw-stat-item">
+              <span class="stat-label">Last Ping:</span>
+              <span id="hwLastPing" class="stat-value text-muted">Never</span>
+            </div>
+          </div>
+
+          <!-- Terminal Log -->
+          <div class="packet-injector" style="margin-top: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label class="input-label" style="margin: 0;">ESP8266 Wi-Fi Communication Log:</label>
+              <button id="btnClearWifiLog" class="btn-text" style="font-size: 11px; color: var(--text-muted); background: none; border: none; cursor: pointer; text-decoration: underline;">Clear Log</button>
+            </div>
+            <div id="wifiLog" class="serial-terminal">
+              <div class="serial-line info">&gt; ESP8266 Wi-Fi Bridge initialized. Enter your ESP8266 IP address and click 'Connect &amp; Start Sync'.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Occupant Phone App Card (QR Code & Launch Link) -->
+      <div class="card phone-app-card" style="border: 1px solid rgba(56, 189, 248, 0.35); background: linear-gradient(180deg, rgba(56, 189, 248, 0.08) 0%, var(--bg-card) 60%);">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">📱 Personal Phone App (Occupant View)</h2>
+            <span class="card-subtitle">Zero-Install Web App &bull; Live Fire Alerts &amp; Custom Safe Routes</span>
+          </div>
+          <span class="badge success">PWA READY</span>
+        </div>
+        <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px;">
+          Building occupants can open this emergency app on their smartphone. It immediately alerts them if fire breaks out, shows exactly which sensor is triggered, allows them to select their current room, and guides them along the safest A* evacuation path!
+        </div>
+
+        <div style="display: flex; gap: 14px; align-items: center; background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px;">
+          <!-- QR Code container -->
+          <div style="background: #ffffff; padding: 6px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&amp;data=http://192.168.137.1:3000/mobile.html" alt="Scan to open mobile app" width="105" height="105" style="display: block;">
+          </div>
+          <div style="flex: 1;">
+            <div style="font-size: 11px; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px;">Scan with your phone:</div>
+            <div style="font-size: 11.5px; font-family: var(--font-mono); color: #f1f5f9; margin: 4px 0 8px 0; word-break: break-all;">
+              http://192.168.137.1:3000/mobile.html
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <a href="mobile.html" target="_blank" class="btn btn-sm btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
+                🚀 Open Mobile View
+              </a>
+              <a href="http://192.168.137.1:3000/mobile.html" target="_blank" class="btn btn-sm btn-secondary" style="text-decoration: none;">
+                🌐 Wi-Fi Hotspot Link
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Project Information / How It Works -->
+      <div class="card info-card">
+        <div class="card-header">
+          <h2 class="card-title">Project Operational Pipeline</h2>
+        </div>
+        <ol class="pipeline-list">
+          <li><strong>Continuous Environmental Sensing:</strong> 8 sensor nodes sample smoke, heat, and optical flame readings.</li>
+          <li><strong>Autonomous Anomaly Classification:</strong> Threshold breaches trigger PRE-ALARM or FIRE states.</li>
+          <li><strong>Dynamic Risk Surface Propagation:</strong> Epicenter is blocked; surrounding corridors incur high risk penalties.</li>
+          <li><strong>Multi-Exit A* Pathfinding:</strong> Algorithm explores grid minimizing $f(n) = g(n) + h(n)$ where $g$ includes fire risk.</li>
+          <li><strong>Safety-First Optimization:</strong> Rejects shorter hazardous corridors in favor of safer alternative exits.</li>
+          <li><strong>Occupant Evacuation Guidance:</strong> Clear neon route guides occupants safely out of the building.</li>
+        </ol>
+      </div>
+
+    </aside>
+  </main>
+
+  <!-- Interactive Cell Tooltip -->
+  <div id="cellTooltip" class="cell-tooltip"></div>
+
+  <!-- Application Bootstrap -->
+  <script type="module" src="script.js?v=4"></script>
+</body>
+</html>
