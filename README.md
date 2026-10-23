@@ -152,7 +152,7 @@ SafeRoute Mobile (`mobile.html`) is a progressive, touch-optimized web applicati
    - **Haptic Vibration**: Physical phone buzz alert test.
    - **Screen Flashlight Strobe**: Flashes high-intensity white light to help navigate dark or smoke-filled stairwells.
    - **Emergency Dialer**: One-touch shortcut to dial national emergency services (`112` / `911`).
-7. **Zero-Configuration Wi-Fi Sync**: Automatically synchronizes with the ESP8266 at `http://192.168.137.209/status`.
+7. **Zero-Configuration Wi-Fi Sync**: Automatically synchronizes with the ESP8266 at `http://192.168.137.46/status`.
 
 ---
 
@@ -188,7 +188,7 @@ cd Smart-Fire-Detection-Evacuation-Simulation
    const char* password = "YOUR_PASSWORD";
    ```
    > [!TIP]
-   > For laptop demonstrations, enable **Windows Mobile Hotspot** (Settings > Network & Internet > Mobile Hotspot). This assigns your computer IP `192.168.137.1` and your ESP8266 an IP like `192.168.137.209`.
+   > For laptop demonstrations, enable **Windows Mobile Hotspot** (Settings > Network & Internet > Mobile Hotspot). This assigns your computer IP `192.168.137.1` and your ESP8266 an IP like `192.168.137.46`.
 
 6. Select Board: **NodeMCU 1.0 (ESP-12E Module)** and your COM Port.
 7. Click **Upload**.
@@ -196,7 +196,7 @@ cd Smart-Fire-Detection-Evacuation-Simulation
    ```
    =========================================
     ESP8266 Fire Detection Active (D-Pins) 
-    API URL: http://192.168.137.209/status
+    API URL: http://192.168.137.46/status
    =========================================
    ```
 
@@ -225,7 +225,7 @@ In your desktop browser, navigate to:
 ```
 http://localhost:3000
 ```
-- In the **ESP8266 Wi-Fi Hardware Bridge** card, verify the URL is set to `http://192.168.137.209/status`.
+- In the **ESP8266 Wi-Fi Hardware Bridge** card, verify the URL is set to `http://192.168.137.46/status`.
 - Click **📡 Connect & Start Sync**. The status badge illuminates `🟢 Live Synced`.
 
 ---

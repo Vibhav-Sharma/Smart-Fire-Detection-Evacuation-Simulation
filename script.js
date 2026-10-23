@@ -575,10 +575,11 @@ class FireEvacuationApp {
       });
     }
 
-    // Always default to active hardware IP: 192.168.137.209
-    let initialUrl = 'http://192.168.137.209/status';
+    // Always default to active hardware IP: 192.168.137.46
+    const DEFAULT_ESP_URL = 'http://192.168.137.46/status';
+    let initialUrl = DEFAULT_ESP_URL;
     const savedUrl = localStorage.getItem('esp8266_url');
-    if (savedUrl && savedUrl.includes('192.168.137.209')) {
+    if (savedUrl && savedUrl.includes('192.168.137.46')) {
       initialUrl = savedUrl;
     } else {
       localStorage.setItem('esp8266_url', initialUrl);
@@ -594,7 +595,7 @@ class FireEvacuationApp {
 
     const normalizeUrl = (raw) => {
       let u = (raw || '').trim();
-      if (!u) return 'http://192.168.137.209/status';
+      if (!u) return DEFAULT_ESP_URL;
       if (!/^https?:\/\//i.test(u)) {
         u = 'http://' + u;
       }

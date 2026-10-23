@@ -37,9 +37,10 @@ class MobileEvacuationApp {
     this.currentRoute = null;
 
     // ESP8266 Wi-Fi Polling State
+    const DEFAULT_ESP_MOBILE_URL = 'http://192.168.137.46/status';
     let savedMobileUrl = localStorage.getItem('esp8266_mobile_url');
-    if (!savedMobileUrl || !savedMobileUrl.includes('192.168.137.209')) {
-      savedMobileUrl = 'http://192.168.137.209/status';
+    if (!savedMobileUrl || !savedMobileUrl.includes('192.168.137.46')) {
+      savedMobileUrl = DEFAULT_ESP_MOBILE_URL;
       localStorage.setItem('esp8266_mobile_url', savedMobileUrl);
     }
     this.espUrl = savedMobileUrl;
