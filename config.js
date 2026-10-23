@@ -5,7 +5,7 @@
  *
  * ⚡ TO CHANGE YOUR ESP8266 IP ADDRESS, JUST CHANGE THIS SINGLE LINE:
  */
-export const ESP8266_IP = '192.168.137.46';
+export const ESP8266_IP = '192.168.137.55';
 
 /**
  * Full HTTP endpoint URL automatically derived from ESP8266_IP.
