@@ -21,6 +21,7 @@ import { CanvasRenderer } from './src/renderer.js';
 import { SensorTelemetryManager } from './src/telemetry.js';
 import { AlarmAudioSystem } from './src/audio.js';
 import { PresentationDemoRunner } from './src/demo.js';
+import { ESP8266_IP, ESP8266_STATUS_URL } from './config.js';
 
 class FireEvacuationApp {
   constructor() {
@@ -575,17 +576,21 @@ class FireEvacuationApp {
       });
     }
 
-    // Always default to active hardware IP: 192.168.137.46
-    const DEFAULT_ESP_URL = 'http://192.168.137.46/status';
-    let initialUrl = DEFAULT_ESP_URL;
-    const savedUrl = localStorage.getItem('esp8266_url');
-    if (savedUrl && savedUrl.includes('192.168.137.46')) {
-      initialUrl = savedUrl;
-    } else {
+    // Centralized IP from config.js (Only 1 place to edit: config.js)
+    let initialUrl = ESP8266_STATUS_URL;
+    const lastConfigIp = localStorage.getItem('esp8266_config_ip');
+    if (lastConfigIp !== ESP8266_IP) {
+      // Config IP changed or first load: automatically overwrite localStorage
+      localStorage.setItem('esp8266_config_ip', ESP8266_IP);
       localStorage.setItem('esp8266_url', initialUrl);
+    } else {
+      const savedUrl = localStorage.getItem('esp8266_url');
+      if (savedUrl) initialUrl = savedUrl;
     }
+
     if (espUrlInput) {
       espUrlInput.value = initialUrl;
+      espUrlInput.placeholder = ESP8266_STATUS_URL;
 
       espUrlInput.addEventListener('input', () => {
         const u = normalizeUrl(espUrlInput.value);
@@ -595,7 +600,7 @@ class FireEvacuationApp {
 
     const normalizeUrl = (raw) => {
       let u = (raw || '').trim();
-      if (!u) return DEFAULT_ESP_URL;
+      if (!u) return ESP8266_STATUS_URL;
       if (!/^https?:\/\//i.test(u)) {
         u = 'http://' + u;
       }

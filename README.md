@@ -228,6 +228,14 @@ http://localhost:3000
 - In the **ESP8266 Wi-Fi Hardware Bridge** card, verify the URL is set to `http://192.168.137.46/status`.
 - Click **📡 Connect & Start Sync**. The status badge illuminates `🟢 Live Synced`.
 
+> [!TIP]
+> ### ⚡ Single Place to Change IP (`config.js`)
+> If your ESP8266 is ever assigned a new IP address, you **only need to change 1 line** in [`config.js`](file:///c:/Users/vibha/Fire_Detection/config.js):
+> ```javascript
+> export const ESP8266_IP = '192.168.137.46';
+> ```
+> Both the desktop dashboard and the mobile phone app will automatically use the new IP! No need to edit any other file.
+
 ---
 
 ### Step 5: Open SafeRoute Mobile App on Your Smartphone

@@ -191,8 +191,8 @@
         </div>
         <div class="modal-body">
           <label for="inputEspMobileUrl" class="input-label">ESP8266 Wi-Fi Status URL:</label>
-          <input type="text" id="inputEspMobileUrl" class="modal-input" value="http://192.168.137.46/status">
-          <p class="modal-hint">Ensure your phone and ESP8266 are on the same Wi-Fi / Hotspot.</p>
+          <input type="text" id="inputEspMobileUrl" class="modal-input" placeholder="Connecting via config.js...">
+          <p class="modal-hint">Configured globally in config.js (or edit here on the fly).</p>
 
           <div class="modal-button-row">
             <button id="btnSaveEspUrl" class="btn-primary-mobile">Save &amp; Reconnect</button>
@@ -214,6 +214,6 @@
   </div>
 
   <!-- Mobile Controller Logic -->
-  <script type="module" src="mobile.js?v=3"></script>
+  <script type="module" src="mobile.js?v=4"></script>
 </body>
 </html>

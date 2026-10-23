@@ -19,6 +19,7 @@ import { calculateDangerMap } from './src/danger.js';
 import { findSafestEvacuationRoute } from './src/astar.js';
 import { SensorTelemetryManager } from './src/telemetry.js';
 import { AlarmAudioSystem } from './src/audio.js';
+import { ESP8266_IP, ESP8266_STATUS_URL } from './config.js';
 
 class MobileEvacuationApp {
   constructor() {
@@ -36,12 +37,15 @@ class MobileEvacuationApp {
     this.dangerMap = calculateDangerMap([], this.baseGrid);
     this.currentRoute = null;
 
-    // ESP8266 Wi-Fi Polling State
-    const DEFAULT_ESP_MOBILE_URL = 'http://192.168.137.46/status';
-    let savedMobileUrl = localStorage.getItem('esp8266_mobile_url');
-    if (!savedMobileUrl || !savedMobileUrl.includes('192.168.137.46')) {
-      savedMobileUrl = DEFAULT_ESP_MOBILE_URL;
+    // ESP8266 Wi-Fi Polling State - Synced with central config.js
+    let savedMobileUrl = ESP8266_STATUS_URL;
+    const lastMobileConfigIp = localStorage.getItem('esp8266_mobile_config_ip');
+    if (lastMobileConfigIp !== ESP8266_IP) {
+      localStorage.setItem('esp8266_mobile_config_ip', ESP8266_IP);
       localStorage.setItem('esp8266_mobile_url', savedMobileUrl);
+    } else {
+      const stored = localStorage.getItem('esp8266_mobile_url');
+      if (stored) savedMobileUrl = stored;
     }
     this.espUrl = savedMobileUrl;
     this.espFireIsActive = false;
@@ -194,6 +198,7 @@ class MobileEvacuationApp {
 
     if (inputUrl) {
       inputUrl.value = this.espUrl;
+      inputUrl.placeholder = ESP8266_STATUS_URL;
     }
 
     if (btnOpenSettings && modal) {
