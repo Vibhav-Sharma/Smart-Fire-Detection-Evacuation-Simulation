@@ -29,7 +29,7 @@ function heuristic(x1, y1, x2, y2) {
  * @param {{x: number, y: number}} start
  * @param {{x: number, y: number, id: string, name: string}} goal
  * @param {Array<Array<number>>} baseGrid
- * @param {Array<Array<any>>} dangerMap
+ * @param {Array<Array<any>; >} dangerMap
  * @returns {null | {path: Array<{x, y}>, totalCost: number, riskCost: number, distance: number, openCount: number, closedCount: number}}
  */
 export function aStarSingle(start, goal, baseGrid, dangerMap) {
